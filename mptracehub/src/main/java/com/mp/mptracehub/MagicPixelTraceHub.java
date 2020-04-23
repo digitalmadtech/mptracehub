@@ -40,6 +40,9 @@ public class MagicPixelTraceHub {
             Executors.newScheduledThreadPool(1);
     private static ScheduledExecutorService senderScheduler =
             Executors.newScheduledThreadPool(1);
+    private static ScheduledExecutorService stopScheduler =
+            Executors.newScheduledThreadPool(1);
+
     private static MagicPixelTraceHub _instance;
     //private static MPRestClient restClient;
     private static MPWebSocketClient wsClient;
@@ -114,7 +117,7 @@ public class MagicPixelTraceHub {
                 senderScheduler.shutdown();
             }
         };
-        scheduler.scheduleWithFixedDelay(stopper,24,24,TimeUnit.HOURS);
+        stopScheduler.scheduleWithFixedDelay(stopper,24,24,TimeUnit.HOURS);
         Runnable r1 = new Runnable() {
             @Override
             public void run() {

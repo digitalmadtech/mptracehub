@@ -114,7 +114,7 @@ public class MagicPixelTraceHub {
         Runnable stopper = new Runnable() {
             @Override
             public void run() {
-                senderScheduler.shutdown();
+                _instance.stop();
             }
         };
         stopScheduler.scheduleWithFixedDelay(stopper,24,24,TimeUnit.HOURS);

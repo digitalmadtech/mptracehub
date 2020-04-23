@@ -10,9 +10,9 @@ import java.util.Map;
 import androidx.annotation.Nullable;
 
 public class MPWebviewClient extends WebViewClient {
-    LogCollector logCollector;
+    MagicPixelTraceHub logCollector;
 
-    public MPWebviewClient(LogCollector logCollector){
+    public MPWebviewClient(MagicPixelTraceHub logCollector){
         this.logCollector = logCollector;
     }
 

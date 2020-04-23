@@ -27,7 +27,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class LogCollector {
+public class MagicPixelTraceHub {
 
     private static LinkedList<String> list = new LinkedList<>();
     private static final String ANDROID_LOG_TIME_FORMAT = "MM-dd kk:mm:ss.SSS";
@@ -40,7 +40,7 @@ public class LogCollector {
             Executors.newScheduledThreadPool(1);
     private static ScheduledExecutorService senderScheduler =
             Executors.newScheduledThreadPool(1);
-    private static LogCollector _instance;
+    private static MagicPixelTraceHub _instance;
     //private static MPRestClient restClient;
     private static MPWebSocketClient wsClient;
     private static String URI = null;
@@ -54,7 +54,13 @@ public class LogCollector {
 
     public static void initCollector(Context context, String configAssetName) throws Exception {
         if (_instance == null)
-            _instance = new LogCollector(context, configAssetName);
+            _instance = new MagicPixelTraceHub(context, configAssetName);
+        if(debugId==null)debugId = prefix+"_"+random();
+        Log.println(Log.DEBUG,"TRACEHUBLOG","Random ID:"+debugId);
+    }
+
+    public static String getDebugSessionId(){
+        return debugId;
     }
 
     public static void startCollector() {
@@ -79,7 +85,7 @@ public class LogCollector {
         properties.load(inputStream);
     }
 
-    private LogCollector(Context context, String configAssetName) throws Exception {
+    private MagicPixelTraceHub(Context context, String configAssetName) throws Exception {
         this.configAssetName = configAssetName;
         loadProperty(context);
         pid = android.os.Process.myPid();
@@ -95,13 +101,10 @@ public class LogCollector {
     }
 
     private void start() {
-        debugId = prefix+"_"+random();
-        debugId = "SURLOG";
-        Log.println(Log.DEBUG,"TRACEHUBLOG","Random ID:"+debugId);
         Runnable r = new Runnable() {
             @Override
             public void run() {
-                LogCollector.this.run();
+                MagicPixelTraceHub.this.run();
             }
         };
         scheduler.scheduleAtFixedRate(r, 1, 5, TimeUnit.SECONDS);

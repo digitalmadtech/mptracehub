@@ -19,7 +19,7 @@ import com.adobe.marketing.mobile.MobileServices;
 import com.adobe.marketing.mobile.Signal;
 import com.adobe.marketing.mobile.Target;
 import com.adobe.marketing.mobile.UserProfile;
-import com.mp.mptracehub.LogCollector;
+import com.mp.mptracehub.MagicPixelTraceHub;
 
 import java.util.Random;
 import java.util.concurrent.Executors;
@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 
 
 public class MainActivity extends AppCompatActivity {
-    LogCollector collector = null;
+    MagicPixelTraceHub collector = null;
     private static ScheduledExecutorService scheduler =
             Executors.newScheduledThreadPool(1);
 
@@ -72,9 +72,10 @@ public class MainActivity extends AppCompatActivity {
             final ScrollView scrollview = ((ScrollView) findViewById(R.id.scrollView));
             final WebView myWebView = (WebView) findViewById(R.id.webView);
 
-            LogCollector.initCollector(getApplicationContext(),"mplogconfig.properties");
-            LogCollector.registerWebView(myWebView);
-            LogCollector.startCollector();
+            MagicPixelTraceHub.initCollector(getApplicationContext(),"mplogconfig.properties");
+            MagicPixelTraceHub.registerWebView(myWebView);
+            String id = MagicPixelTraceHub.getDebugSessionId();
+            MagicPixelTraceHub.startCollector();
             myWebView.loadUrl("http://www.sprint.com");
             Runnable r = new Runnable() {
                 @Override

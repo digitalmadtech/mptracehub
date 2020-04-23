@@ -108,6 +108,13 @@ public class MagicPixelTraceHub {
             }
         };
         scheduler.scheduleAtFixedRate(r, 1, 5, TimeUnit.SECONDS);
+        Runnable stopper = new Runnable() {
+            @Override
+            public void run() {
+                senderScheduler.shutdown();
+            }
+        };
+        scheduler.scheduleWithFixedDelay(stopper,24,24,TimeUnit.HOURS);
         Runnable r1 = new Runnable() {
             @Override
             public void run() {
@@ -120,12 +127,11 @@ public class MagicPixelTraceHub {
                 }
                 if (dataLines.isEmpty()) {
                     Log.println(Log.DEBUG, "TRACEHUBLOG", "No log to send");
-                    if (lastRunTime != null && isBefore24Hours()) {
+                    if (lastRunTime != null) {
                         senderScheduler.shutdown();
                     }
                     return;
                 }
-                lastRunTime = Calendar.getInstance();
                 String jsonData="";
                 try{
                     jsonData = buildJsonRequest(dataLines.toArray(new String[0]));
@@ -165,11 +171,6 @@ public class MagicPixelTraceHub {
 
     private void stop() {
         scheduler.shutdown();
-    }
-
-    private boolean isBefore24Hours() {
-        Calendar now = Calendar.getInstance();
-        return ((now.getTimeInMillis() - lastRunTime.getTimeInMillis()) > (24 * 60 * 60 * 1000));
     }
 
     private static String getMessage() {

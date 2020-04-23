@@ -89,7 +89,7 @@ public class MagicPixelTraceHub {
         this.configAssetName = configAssetName;
         loadProperty(context);
         pid = android.os.Process.myPid();
-        java.net.URI uri = new URI(properties.getProperty("mpLogUrl"));
+        java.net.URI uri = new URI(properties.containsKey("mpLogUrl")?properties.getProperty("mpLogUrl"):"wss://thub-pub.magicpixel.io");
         String key = properties.getProperty("apiKey");
         vendorId = properties.getProperty("vendorId");
         projectId = properties.getProperty("projectId");

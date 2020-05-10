@@ -57,6 +57,7 @@ public class MPWebviewClient extends WebViewClient {
             jsonObject.put("mime", mimeType);
             jsonObject.put("body", "<Can't resolve body>");
             logCollector.send(jsonObject.toString());
+            jsonObject = new JSONObject();
             jsonObject.put("typ", "RES");
             jsonObject.put("url",url);
             jsonObject.put("headers",responseHeaders);

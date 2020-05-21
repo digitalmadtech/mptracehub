@@ -125,10 +125,10 @@ public class MagicPixelTraceHub {
         Thread tt = new Thread(){
             public void run(){
                while(isRunning){
-                   r.run();
                    try {
-                       Thread.sleep(5000);
-                   } catch (InterruptedException e) {
+                   r.run();
+                   Thread.sleep(5000);
+                   } catch (Exception e) {
                    }
                }
             }
@@ -137,30 +137,33 @@ public class MagicPixelTraceHub {
         Runnable r1 = new Runnable() {
             @Override
             public void run() {
-                String message = null;
-                int count = 0;
-                List<String> dataLines = new ArrayList<>();
-                while ((message = getMessage()) != null && !message.contains("TRACEHUBLOG") && count < 20) {
-                    dataLines.add(message);
-                    count++;
-                }
-                if (dataLines.isEmpty()) {
-                    if (lastRunTime != null) {
-                        senderScheduler.shutdown();
+                try {
+                    String message = null;
+                    int count = 0;
+                    List<String> dataLines = new ArrayList<>();
+                    while ((message = getMessage()) != null && !message.contains("TRACEHUBLOG") && count < 50) {
+                        dataLines.add(message);
+                        count++;
                     }
-                    return;
-                }
-                String jsonData="";
-                try{
-                    jsonData = buildJsonRequest(dataLines.toArray(new String[0]));
-                } catch (JSONException e) {
-                    Log.println(Log.DEBUG, "TRACEHUBLOG", Log.getStackTraceString(e));
-                }
-                wsClient.send(jsonData);
-                Log.println(Log.DEBUG, "TRACEHUBLOG", dataLines.size()+" lines sent");
+                    if (dataLines.isEmpty()) {
+                        Log.println(Log.DEBUG, "TRACEHUBLOG", "No log to send");
+                        if (lastRunTime != null) {
+                            senderScheduler.shutdown();
+                        }
+                        return;
+                    }
+                    String jsonData = "";
+                    try {
+                        jsonData = buildJsonRequest(dataLines.toArray(new String[0]));
+                    } catch (JSONException e) {
+                        Log.println(Log.DEBUG, "TRACEHUBLOG", Log.getStackTraceString(e));
+                    }
+                    wsClient.send(jsonData);
+                    Log.println(Log.DEBUG, "TRACEHUBLOG", dataLines.size() + " lines sent");
+                }catch(Exception ex){}
             }
         };
-        senderScheduler.scheduleAtFixedRate(r1, 10, 5, TimeUnit.SECONDS);
+        senderScheduler.scheduleAtFixedRate(r1, 5, 2, TimeUnit.SECONDS);
     }
 
     void send(String data){

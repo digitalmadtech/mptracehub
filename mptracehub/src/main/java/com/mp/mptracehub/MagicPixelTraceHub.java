@@ -26,6 +26,8 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MagicPixelTraceHub {
 
@@ -34,7 +36,7 @@ public class MagicPixelTraceHub {
     private SimpleDateFormat logCatDate = new SimpleDateFormat(ANDROID_LOG_TIME_FORMAT);
     private static int pid;
 
-    private static boolean isRunning = false;
+    private static boolean isRunning = true;
     private static long lastReadTime = 0;
     private static ScheduledExecutorService scheduler =
             Executors.newScheduledThreadPool(1);
@@ -54,11 +56,13 @@ public class MagicPixelTraceHub {
     private static String prefix;
     private static String debugId;
     private static Properties properties;
+    private static LogParser parser;
 
     public static void initCollector(Context context, String configAssetName) throws Exception {
         if (_instance == null)
             _instance = new MagicPixelTraceHub(context, configAssetName);
         if(debugId==null)debugId = prefix+"_"+random();
+        parser = new LogParser();
         Log.println(Log.DEBUG,"TRACEHUBLOG","Random ID:"+debugId);
     }
 
@@ -104,7 +108,7 @@ public class MagicPixelTraceHub {
     }
 
     private void start() {
-        Runnable r = new Runnable() {
+        final Runnable r = new Runnable() {
             @Override
             public void run() {
                 MagicPixelTraceHub.this.run();
@@ -114,10 +118,22 @@ public class MagicPixelTraceHub {
         Runnable stopper = new Runnable() {
             @Override
             public void run() {
-                _instance.stop();
+                isRunning=false;
             }
         };
         stopScheduler.scheduleWithFixedDelay(stopper,24,24,TimeUnit.HOURS);
+        Thread tt = new Thread(){
+            public void run(){
+               while(isRunning){
+                   r.run();
+                   try {
+                       Thread.sleep(5000);
+                   } catch (InterruptedException e) {
+                   }
+               }
+            }
+        };
+        tt.start();
         Runnable r1 = new Runnable() {
             @Override
             public void run() {
@@ -129,7 +145,6 @@ public class MagicPixelTraceHub {
                     count++;
                 }
                 if (dataLines.isEmpty()) {
-                    Log.println(Log.DEBUG, "TRACEHUBLOG", "No log to send");
                     if (lastRunTime != null) {
                         senderScheduler.shutdown();
                     }
@@ -159,7 +174,10 @@ public class MagicPixelTraceHub {
     private String buildJsonRequest(String[] data) throws JSONException{
         JSONArray lines = new JSONArray();
         for(String aLineData:data){
-            lines.put(aLineData);
+            JSONObject dataObject = new JSONObject();
+            dataObject.put("tag",parser.getTag(aLineData));
+            dataObject.put("log", aLineData);
+            lines.put(dataObject);
         }
         JSONObject obj = new JSONObject();
         obj.put("message", "publish");
@@ -207,7 +225,6 @@ public class MagicPixelTraceHub {
             if (lastReadTime != 0) {
                 sCommand.add("-t" + logCatDate.format(new Date(lastReadTime)));
             } else sCommand.add("-d");
-
             Process process = new ProcessBuilder().command(sCommand).start();
             reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line = null;
@@ -225,7 +242,26 @@ public class MagicPixelTraceHub {
                 reader.close();
             } catch (IOException ex) {
             }
-            isRunning = false;
+        }
+    }
+}
+class LogParser{
+    private final Pattern sLogHeaderPattern = Pattern.compile(
+            "^\\[\\s(\\d\\d-\\d\\d\\s\\d\\d:\\d\\d:\\d\\d\\.\\d+)"
+                    + "\\s+(\\d*):\\s*(\\S+)\\s([VDIWEAF])/(.*)\\]$");
+
+
+    public String getTag(String line){
+        try {
+            String[] parts = line.split(" ");
+            String tagPart = parts[2];
+            String[] innerParts = tagPart.split("/");
+            String tag = innerParts[1];
+            innerParts = tag.split("\\(");
+            tag=innerParts[0];
+            return tag.replace(":", "");
+        }catch(Exception ex){
+            return "NoTag";
         }
     }
 }

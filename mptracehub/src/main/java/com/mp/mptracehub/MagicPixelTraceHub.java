@@ -107,6 +107,20 @@ public class MagicPixelTraceHub {
         wsClient.connect();
     }
 
+    public static void log(String tag, String message){
+        try {
+            String jsonData = "";
+            try {
+                Log.i("TRACEHUBLOG:"+tag,message);
+                jsonData = buildJsonRequest(new String[]{message}, tag);
+            } catch (JSONException e) {
+                Log.println(Log.DEBUG, "TRACEHUBLOG", Log.getStackTraceString(e));
+            }
+            wsClient.send(jsonData);
+            Log.println(Log.DEBUG, "TRACEHUBLOG", "1 line sent");
+        }catch(Exception ex){}
+    }
+
     private void start() {
         final Runnable r = new Runnable() {
             @Override
@@ -154,7 +168,7 @@ public class MagicPixelTraceHub {
                     }
                     String jsonData = "";
                     try {
-                        jsonData = buildJsonRequest(dataLines.toArray(new String[0]));
+                        jsonData = buildJsonRequest(dataLines.toArray(new String[0]),null);
                     } catch (JSONException e) {
                         Log.println(Log.DEBUG, "TRACEHUBLOG", Log.getStackTraceString(e));
                     }
@@ -168,17 +182,19 @@ public class MagicPixelTraceHub {
 
     void send(String data){
         try {
-            wsClient.send(buildJsonRequest(new String[]{data}));
+            wsClient.send(buildJsonRequest(new String[]{data},null));
         }catch(JSONException je){
             Log.println(Log.DEBUG, "TRACEHUBLOG", Log.getStackTraceString(je));
         }
     }
 
-    private String buildJsonRequest(String[] data) throws JSONException{
+    private static String buildJsonRequest(String[] data, String tag) throws JSONException{
         JSONArray lines = new JSONArray();
         for(String aLineData:data){
             JSONObject dataObject = new JSONObject();
-            dataObject.put("tag",parser.getTag(aLineData));
+            if(tag==null)
+                dataObject.put("tag",parser.getTag(aLineData));
+            else dataObject.put("tag",tag);
             dataObject.put("log", aLineData);
             lines.put(dataObject);
         }
